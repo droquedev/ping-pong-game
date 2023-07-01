@@ -18,13 +18,14 @@ local scoreFont = nil
 local player1 = nil
 local player2 = nil
 local ball = nil
-local gameState = nil
+local gameState = 'menu'
 local player1Score = 0
 local player2Score = 0
 local servingPlayer = 1
 local largeFont = nil
 local winningPlayer = 0
 local sounds = nil
+local isVersusAI = true
 
 function love.load()
 	love.window.setTitle("David's Pong Game")
@@ -57,11 +58,12 @@ function love.load()
 	player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 50, 5, 20)
 
 	ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
-
-	gameState = 'start'
 end
 
 function love.update(dt)
+	if gameState == 'menu' then
+		return
+	end
 	if gameState == 'serve' then
 		ball.dy = math.random(-50, 50)
 		if servingPlayer == 1 then
@@ -71,7 +73,7 @@ function love.update(dt)
 		end
 	elseif gameState == 'play' then
 		if ball:collides(player1) then
-			ball.dx = -ball.dx * 1.03
+			ball.dx = -ball.dx * 1.04
 			ball.x = player1.x + 5
 
 			if ball.dy < 0 then
@@ -150,7 +152,23 @@ function love.update(dt)
 		player1.dy = 0
 	end
 
-	if love.keyboard.isDown('up') then
+	if (isVersusAI) then
+		if (ball.x > VIRTUAL_WIDTH / 2) then
+			if (ball.y < player2.y or ball.y > player2.y + 20) then
+				if (ball.y < player2.y) then
+					player2.dy = -PADDLE_SPEED - 10
+				elseif (ball.y > player2.y + 20) then
+					player2.dy = PADDLE_SPEED - 10
+				else
+					player2.dy = 0
+				end
+			else
+				player2.dy = 0
+			end
+		else
+			player2.dy = 0
+		end
+	elseif love.keyboard.isDown('up') then
 		player2.dy = -PADDLE_SPEED
 	elseif love.keyboard.isDown('down') then
 		player2.dy = PADDLE_SPEED
@@ -167,7 +185,17 @@ function love.keypressed(key)
 		love.event.quit()
 	end
 
-	if key == 'enter' or key == 'return' then
+	if gameState == 'menu' then
+		if key == 'up' or key == 'w' and isVersusAI ~= true then
+			isVersusAI = true
+		elseif (key == 'down' or key == 's') and isVersusAI ~= false then
+			isVersusAI = false
+		elseif key == 'enter' or key == 'return' then
+			gameState = 'start'
+		end
+	end
+
+	if (key == 'enter' or key == 'return') and gameState ~= 'menu' then
 		if gameState == 'start' then
 			gameState = 'serve'
 		elseif gameState == 'serve' then
@@ -204,14 +232,29 @@ function love.draw()
 		love.graphics.setFont(smallFont)
 		love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 0, 10, VIRTUAL_WIDTH, 'center')
 		love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
-	elseif gameState == 'play' then
-		-- no UI messages to display in play
 	elseif gameState == 'done' then
 		love.graphics.setFont(largeFont)
 		love.graphics.printf('Player ' .. tostring(winningPlayer) .. ' wins!', 0, 10, VIRTUAL_WIDTH, 'center')
 		love.graphics.setFont(smallFont)
 		love.graphics.printf('Press Enter to restart!', 0, 30, VIRTUAL_WIDTH, 'center')
+	elseif gameState == 'menu' then
+		love.graphics.setFont(largeFont)
+		love.graphics.printf('Choose your game mode!', 0, 10, VIRTUAL_WIDTH, 'center')
+		love.graphics.setFont(smallFont)
+		if isVersusAI == true then
+			love.graphics.setColor(0, 255, 0, 255)
+			love.graphics.printf('Versus AI', 0, 30, VIRTUAL_WIDTH, 'center')
+			love.graphics.setColor(255, 0, 0, 255)
+			love.graphics.printf('Versus Player', 0, 40, VIRTUAL_WIDTH, 'center')
+		else
+			love.graphics.setColor(255, 0, 0, 255)
+			love.graphics.printf('Versus AI', 0, 30, VIRTUAL_WIDTH, 'center')
+			love.graphics.setColor(0, 255, 0, 255)
+			love.graphics.printf('Versus Player', 0, 40, VIRTUAL_WIDTH, 'center')
+		end
 	end
+
+	love.graphics.setColor(255, 255, 255, 255)
 
 
 	player1:render()
@@ -223,7 +266,6 @@ function love.draw()
 
 	love.graphics.printf(tostring(player1Score), 0, VIRTUAL_HEIGHT / 3, VIRTUAL_WIDTH / 2, 'center')
 	love.graphics.printf(tostring(player2Score), VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 3, VIRTUAL_WIDTH / 2, 'center')
-
 
 	displayFps()
 

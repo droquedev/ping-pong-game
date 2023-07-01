@@ -5,7 +5,6 @@ function Ball:init(x, y, width, height)
     self.y = y
     self.width = width
     self.height = height
-    self.score = 0
     self.dx = math.random(2) == 1 and -100 or 100
     self.dy = math.random(-50, 50)
 end

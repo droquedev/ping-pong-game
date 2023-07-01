@@ -21,6 +21,7 @@ local ball = nil
 local gameState = nil
 
 function love.load()
+	love.window.setTitle("David's Pong Game")
 	love.graphics.setDefaultFilter('nearest', 'nearest')
 
 	math.randomseed(os.time())
@@ -63,6 +64,38 @@ function love.update(dt)
 	end
 
 	if gameState == 'play' then
+		if ball:collides(player1) then
+			ball.dx = -ball.dx * 1.03
+			ball.x = player1.x + 5
+
+			if ball.dy < 0 then
+				ball.dy = -math.random(10, 150)
+			else
+				ball.dy = math.random(10, 150)
+			end
+		end
+
+		if ball:collides(player2) then
+			ball.dx = -ball.dx * 1.03
+			ball.x = player2.x - 4
+
+			if ball.dy < 0 then
+				ball.dy = -math.random(10, 150)
+			else
+				ball.dy = math.random(10, 150)
+			end
+		end
+
+		if ball.y <= 0 then
+			ball.y = 0
+			ball.dy = -ball.dy
+		end
+
+		if ball.y >= VIRTUAL_HEIGHT - 4 then
+			ball.y = VIRTUAL_HEIGHT - 4
+			ball.dy = -ball.dy
+		end
+
 		ball:update(dt)
 	end
 
@@ -106,5 +139,16 @@ function love.draw()
 
 	love.graphics.setFont(scoreFont)
 
+	love.graphics.printf('0', 0, VIRTUAL_HEIGHT / 3, VIRTUAL_WIDTH / 2, 'center')
+	love.graphics.printf('0', VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 3, VIRTUAL_WIDTH / 2, 'center')
+
+	displayFps()
+
 	push:apply('end')
+end
+
+function displayFps()
+	love.graphics.setFont(smallFont)
+	love.graphics.setColor(0, 255, 0, 255)
+	love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
 end
